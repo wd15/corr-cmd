@@ -1,29 +1,36 @@
+"""`corrcli` -- the CoRR comand line tool.
+
+Use
+
+    $ corrcli --help
+
+for usage details or
+
+    $ python setup.py install
+
+to install and
+
+    $ python -c "import corrcli; corrcli.test()"
+
+to test.
+
+"""
+
 import os
+from .tools import get_version
+from .commands.cli import cli
+from .commands.config import config
+from .commands.watch import watch
 
 
-def test():
+def test(): # pragma: no cover
     r"""
     Run all the doctests available.
     """
+    import pytest
     path = os.path.split(__file__)[0]
-    print "Path: "+path
-    nose.main(argv=['-w', path, '--with-doctest'])
+    pytest.main(args=[path, '--doctest-modules', '-r s'])
 
-
-def get_version():
-    """Get the version of the code from egg_info.
-
-    Returns:
-      the package version number
-    """
-    from pkg_resources import get_distribution, DistributionNotFound
-
-    try:
-        version = get_distribution(__name__).version
-    except DistributionNotFound:
-        version = "unknown, try running `python setup.py egg_info`"
-
-    return version
 
 __version__ = get_version()
 
