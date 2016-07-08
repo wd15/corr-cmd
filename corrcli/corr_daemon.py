@@ -5,9 +5,14 @@ import logging
 import os
 import glob
 import signal
+from subprocess import Popen
+from time import sleep
+from contextlib import contextmanager
+
 import pandas
 import daemon
 import daemon.pidfile
+
 from .commands.cli import DEFAULT_DAEMON_DIR
 
 
@@ -169,3 +174,37 @@ class CoRRDaemon(object):
 
         if logger:
             logger.info("Stop daemon with pid {0}".format(pid))
+
+
+@contextmanager
+def start_daemon(config_dir, callback_func=None):
+    """CoRR Daemon context manager.
+
+    Only used for tests.
+
+    Args:
+      config_dir: the CoRR configuration directory
+      callback_func: the name of the callback function
+
+    Yields:
+      the daemon ID
+
+    """
+    daemon_ids_before = set(CoRRDaemon.list(config_dir).daemon_id)
+    arguments = ['corrcli',
+                 '--config-dir={0}'.format(config_dir),
+                 'watch',
+                 'start',
+                 '--log']
+    if callback_func is not None:
+        arguments.append('--callback-func={0}'.format(callback_func))
+    Popen(arguments).communicate()
+    sleep(1)
+    daemon_id = (set(CoRRDaemon.list(config_dir).daemon_id) - daemon_ids_before).pop()
+    yield daemon_id
+    arguments = ['corrcli',
+                 '--config-dir={0}'.format(config_dir),
+                 'watch',
+                 'stop',
+                 '{0}'.format(daemon_id)]
+    Popen(arguments).communicate()
